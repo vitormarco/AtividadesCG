@@ -263,10 +263,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		cubeScale += 0.1f;
 		cubeScale2 += 0.1f;
 	}
-
-	printf("Tecla pressionada: %d\n", key);
-
-
 }
 
 // Esta função está bastante harcoded - objetivo é criar os buffers que armazenam a 
