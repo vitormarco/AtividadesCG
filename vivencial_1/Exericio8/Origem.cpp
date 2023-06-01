@@ -36,176 +36,94 @@ using namespace std;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
 // Protótipos das funções
+int numero_vertices = 0;
 int setupGeometry();
+GLFWwindow* initializeGL();
+int setupShader();
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
 
 
 bool rotateX=false, rotateY=false, rotateZ=false;
+const GLchar* vertexShaderSource = "#version 450\n"
+"layout (location = 0) in vec3 position;\n"
+"uniform mat4 model;\n"
+"void main()\n"
+"{\n"
+//...pode ter mais linhas de código aqui!
+"gl_Position = model * vec4(position, 1.0);\n"
+"}\0";
 
-struct Vertex
-{
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 texCoords;
-};
+//Códifo fonte do Fragment Shader (em GLSL): ainda hardcoded
+const GLchar* fragmentShaderSource = "#version 450\n"
+"uniform vec4 finalColor;\n"
+"out vec4 color;\n"
+"void main()\n"
+"{\n"
+"color = finalColor;\n"
+"}\n\0";
 
-GLFWwindow* initializeGL()
-{
-    // Inicialização da GLFW
-    if (!glfwInit())
-    {
-        std::cout << "Failed to initialize GLFW" << std::endl;
-        return nullptr;
-    }
 
-    // Configuração do contexto OpenGL
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Criação da janela GLFW
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Suzanne Example", nullptr, nullptr);
-    if (!window)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return nullptr;
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSetKeyCallback(window, key_callback);
-
-    // Inicialização do GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return nullptr;
-    }
-
-    // Definindo as dimensões da viewport com as mesmas dimensões da janela da aplicação
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
-
-    return window;
-}
-GLuint suzanneIndexCount = 0;
-GLuint loadSuzanneModel()
-{
-    const char* modelPath = "../Models/suzanneTriLowPoly.obj";
-
-    std::ifstream file(modelPath);
-    if (!file)
-    {
-        std::cout << "Failed to open model file: " << modelPath << std::endl;
-        return 0;
-    }
-
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::vec2> texCoords;
-    std::vector<unsigned int> indices;
-
-    std::string line;
-    while (std::getline(file, line))
-    {
-        std::istringstream iss(line);
-        std::string prefix;
-        iss >> prefix;
-
-        if (prefix == "v")
-        {
-            glm::vec3 position;
-            iss >> position.x >> position.y >> position.z;
-            positions.push_back(position);
-        }
-        else if (prefix == "vn")
-        {
-            glm::vec3 normal;
-            iss >> normal.x >> normal.y >> normal.z;
-            normals.push_back(normal);
-        }
-        else if (prefix == "vt")
-        {
-            glm::vec2 texCoord;
-            iss >> texCoord.x >> texCoord.y;
-            texCoords.push_back(texCoord);
-        }
-        else if (prefix == "f")
-        {
-            unsigned int index;
-            char slash;
-
-            for (int i = 0; i < 3; ++i)
-            {
-                iss >> index >> slash;
-                indices.push_back(index - 1);
-            }
-        }
-    }
-
-    GLuint VAO, VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    std::vector<Vertex> vertices;
-    for (unsigned int i = 0; i < indices.size(); ++i)
-    {
-        Vertex vertex;
-        vertex.position = positions[indices[i]];
-        vertex.normal = normals[indices[i]];
-        vertex.texCoords = texCoords[indices[i]];
-        vertices.push_back(vertex);
-    }
-    suzanneIndexCount = indices.size();
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
-
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-
-    glBindVertexArray(0);
-
-    return VAO;
-}
 
 // Função MAIN
 int main()
 {
     GLFWwindow* window = initializeGL();
 
-    GLuint suzanneVAO = loadSuzanneModel();
-    unsigned int suzanneIndexCount = 0;
+	GLuint shaderID = setupShader();
+
+	GLuint VAO = setupGeometry();
+
+	glUseProgram(shaderID);
+
+	glm::mat4 model = glm::mat4(1); 
+	GLint modelLoc = glGetUniformLocation(shaderID, "model");
+
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
+
+	GLint colorLoc = glGetUniformLocation(shaderID, "finalColor");
+	glUniform4f(colorLoc, 0.5f, 0.0f, 0.5f, 1.0f);
 
     while (!glfwWindowShouldClose(window))
     {
-        glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		float angle = (GLfloat)glfwGetTime();
+
+		model = glm::mat4(1);
+		if (rotateX)
+		{
+			model = glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
+		}
+		else if (rotateY)
+		{
+			model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		}
+		else if (rotateZ)
+		{
+			model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+		}
+
+		glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
 
         // Renderização do modelo da Suzanne
-        glBindVertexArray(suzanneVAO);
-        glDrawElements(GL_TRIANGLES, suzanneIndexCount, GL_UNSIGNED_INT, 0); // Substitua suzanneIndexCount pelo número de índices do modelo da Suzanne
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, (numero_vertices * 3));
+		glUniform4f(colorLoc, 0.0, 0.0, 0.0, 1.0);
+
+		for (int n = 0; n < numero_vertices; n += 3) {
+			glDrawArrays(GL_LINE_LOOP, n, 3);
+		}
+		glUniform4f(colorLoc, 0.5f, 0.0f, 0.5f, 1.0f);
+
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
+	glDeleteVertexArrays(1, &VAO);
     glfwTerminate();
     return 0;
 }
@@ -248,41 +166,59 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 // A função retorna o identificador do VAO
 int setupGeometry()
 {
-	// Aqui setamos as coordenadas x, y e z do triângulo e as armazenamos de forma
-	// sequencial, já visando mandar para o VBO (Vertex Buffer Objects)
-	// Cada atributo do vértice (coordenada, cores, coordenadas de textura, normal, etc)
-	// Pode ser arazenado em um VBO único ou em VBOs separados
-	GLfloat vertices[] = {
+	std::vector< glm::vec3 > vertexIndices = {};
+	std::vector< glm::vec3 > triangulos = {};
+	string line;
+	string v, valuesX, valuesY, valuesZ;
 
-		//Base da pirâmide: 2 triângulos
-		//x    y    z    r    g    b
-		-0.5, -0.5, -0.5, 1.0, 1.0, 0.0,
-		-0.5, -0.5,  0.5, 0.0, 1.0, 1.0,
-		 0.5, -0.5, -0.5, 1.0, 0.0, 1.0,
+	ifstream myfile("suzanneTri.obj");
+	while (!myfile.eof())
+	{
+		getline(myfile, line);
+		std::istringstream iss(line);
+		if (line[0] == 'v' && line[1] == ' ') {
+			iss >> v >> valuesX >> valuesY >> valuesZ;
+			glm::vec3 aux = { std::stof(valuesX), std::stof(valuesY), std::stof(valuesZ) };
+			vertexIndices.push_back(aux);
+		}
 
-		 -0.5, -0.5, 0.5, 1.0, 1.0, 0.0,
-		  0.5, -0.5,  0.5, 0.0, 1.0, 1.0,
-		  0.5, -0.5, -0.5, 1.0, 0.0, 1.0,
+		if (line[0] == 'f' && line[1] == ' ')
+		{
 
-		 //
-		 -0.5, -0.5, -0.5, 1.0, 1.0, 0.0,
-		  0.0,  0.5,  0.0, 1.0, 1.0, 0.0,
-		  0.5, -0.5, -0.5, 1.0, 1.0, 0.0,
+			string delimiter = " ";
+			string delimiter1 = "/";
+			int primeira_parte = 0;
+			int segunda_parte = 0;
+			int terceira_parte = 0;
+			auto finish = line.find(delimiter); // gives position of first occurrence of delimiter
+			line = line.substr(finish + 1);
 
-		  -0.5, -0.5, -0.5, 1.0, 0.0, 1.0,
-		  0.0,  0.5,  0.0, 1.0, 0.0, 1.0,
-		  -0.5, -0.5, 0.5, 1.0, 0.0, 1.0,
+			if (finish != line.npos) { // find returned the end of string
+				primeira_parte = stoi(line.substr(0, line.find(delimiter1))); // 
+			}
 
-		   -0.5, -0.5, 0.5, 1.0, 1.0, 0.0,
-		  0.0,  0.5,  0.0, 1.0, 1.0, 0.0,
-		  0.5, -0.5, 0.5, 1.0, 1.0, 0.0,
+			finish = line.find(delimiter); // gives position of first occurrence of delimiter
+			line = line.substr(finish + 1);
 
-		   0.5, -0.5, 0.5, 0.0, 1.0, 1.0,
-		  0.0,  0.5,  0.0, 0.0, 1.0, 1.0,
-		  0.5, -0.5, -0.5, 0.0, 1.0, 1.0,
+			if (finish != line.npos) { // find returned the end of string
+				segunda_parte = stoi(line.substr(0, line.find(delimiter1))); // 
+			}
+
+			finish = line.find(delimiter); // gives position of first occurrence of delimiter
+			line = line.substr(finish + 1);
+
+			if (finish != line.npos) { // find returned the end of string
+				terceira_parte = stoi(line.substr(0, line.find(delimiter1))); // 
+			}
+
+			triangulos.push_back(vertexIndices[terceira_parte - 1]);
+			triangulos.push_back(vertexIndices[segunda_parte - 1]);
+			triangulos.push_back(vertexIndices[primeira_parte - 1]);
 
 
-	};
+			numero_vertices++;
+		}
+	}
 
 	GLuint VBO, VAO;
 
@@ -293,7 +229,7 @@ int setupGeometry()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
 	//Envia os dados do array de floats para o buffer da OpenGl
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, triangulos.size() * sizeof(GLfloat) * 3, &triangulos[0], GL_STATIC_DRAW);
 
 	//Geração do identificador do VAO (Vertex Array Object)
 	glGenVertexArrays(1, &VAO);
@@ -301,7 +237,7 @@ int setupGeometry()
 	// Vincula (bind) o VAO primeiro, e em seguida  conecta e seta o(s) buffer(s) de vértices
 	// e os ponteiros para os atributos 
 	glBindVertexArray(VAO);
-	
+
 	//Para cada atributo do vertice, criamos um "AttribPointer" (ponteiro para o atributo), indicando: 
 	// Localização no shader * (a localização dos atributos devem ser correspondentes no layout especificado no vertex shader)
 	// Numero de valores que o atributo tem (por ex, 3 coordenadas xyz) 
@@ -309,14 +245,14 @@ int setupGeometry()
 	// Se está normalizado (entre zero e um)
 	// Tamanho em bytes 
 	// Deslocamento a partir do byte zero 
-	
+
 	//Atributo posição (x, y, z)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
 	//Atributo cor (r, g, b)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	//glEnableVertexAttribArray(1);
 
 
 
@@ -330,5 +266,87 @@ int setupGeometry()
 	return VAO;
 }
 
+GLFWwindow* initializeGL()
+{
+	// Inicialização da GLFW
+	if (!glfwInit())
+	{
+		std::cout << "Failed to initialize GLFW" << std::endl;
+		return nullptr;
+	}
+
+	// Configuração do contexto OpenGL
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// Criação da janela GLFW
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Suzanne Example", nullptr, nullptr);
+	if (!window)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return nullptr;
+	}
+
+	glfwMakeContextCurrent(window);
+	glfwSetKeyCallback(window, key_callback);
+
+	// Inicialização do GLAD
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return nullptr;
+	}
+
+	// Definindo as dimensões da viewport com as mesmas dimensões da janela da aplicação
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	glViewport(0, 0, width, height);
+
+	return window;
+}
+
+int setupShader()
+{
+	// Vertex shader
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+	// Checando erros de compilação (exibição via log no terminal)
+	GLint success;
+	GLchar infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+	// Fragment shader
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+	// Checando erros de compilação (exibição via log no terminal)
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+	// Linkando os shaders e criando o identificador do programa de shader
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+	// Checando por erros de linkagem
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+	}
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
 
 
+	return shaderProgram;
+}

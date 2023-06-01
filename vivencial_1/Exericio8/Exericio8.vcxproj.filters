@@ -35,6 +35,9 @@
     <ClInclude Include="Shader.h">
       <Filter>Arquivos de Cabeçalho</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shaders\hello.fs">
@@ -45,8 +48,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Object Include="..\..\..\..\Downloads\suzanneTriLowPoly.obj">
-      <Filter>Models</Filter>
-    </Object>
+    <ResourceCompile Include="Hello3D.rc">
+      <Filter>Arquivos de Recurso</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
