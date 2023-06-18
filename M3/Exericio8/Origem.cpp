@@ -320,44 +320,12 @@ int setupGeometry(const struct Obj& obj)
 	// e os ponteiros para os atributos
 	glBindVertexArray(VAO);
 
-	//Para cada atributo do vertice, criamos um "AttribPointer" (ponteiro para o atributo), indicando:
-	// Localização no shader * (a localização dos atributos devem ser correspondentes no layout especificado no vertex shader)
-	// Numero de valores que o atributo tem (por ex, 3 coordenadas xyz)
-	// Tipo do dado
-	// Se está normalizado (entre zero e um)
-	// Tamanho em bytes
-	// Deslocamento a partir do byte zero
-
-	//Atributo posição (x, y, z)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertex_stride_size, (GLvoid*)offsetof(Vertex, position));
 	glEnableVertexAttribArray(0);
 
-	//Atributo cor (r, g, b)
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
-	//glEnableVertexAttribArray(1);
-
-	//Atributo texcoord
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vertex_stride_size, (GLvoid*)offsetof(Vertex, texcoord));
 	glEnableVertexAttribArray(1);
 
-	// Default value for color attribute
-	//glVertexAttrib3f(1, 1.f, 0.f, 0.f);
-	//glDisableVertexAttribArray(1);
-
-	// Carrega os indices
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//size_t index_stride_size = sizeof(decltype(obj.triangle_indices)::value_type);
-	//size_t index_total_size = obj.triangle_indices.size() * index_stride_size;
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_total_size, obj.triangle_indices.data(), GL_STATIC_DRAW);
-
-
-	// Observe que isso é permitido, a chamada para glVertexAttribPointer registrou o VBO como o objeto de buffer de vértice
-	// atualmente vinculado - para que depois possamos desvincular com segurança
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	// Desvincula o VAO (é uma boa prática desvincular qualquer buffer ou array para evitar bugs medonhos)
 	glBindVertexArray(0);
 
 	return VAO;
