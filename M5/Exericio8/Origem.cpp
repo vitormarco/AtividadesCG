@@ -122,8 +122,8 @@ int main()
 
 		camera.update();
 
-		suzanne.update();
 		suzanne.draw();
+		suzanne.update();
 
 		glfwSwapBuffers(window);
 	}
