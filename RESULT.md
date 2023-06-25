@@ -33,3 +33,9 @@
 <img src="./images/git/m5.gif">
 
 > [Source M5](https://github.com/vitormarco/AtividadesCG/blob/main/M5/Exericio8/Origem.cpp)
+
+## Resultado M6
+
+<img src="./images/git/m6.gif">
+
+> [Source M6](https://github.com/vitormarco/AtividadesCG/blob/main/M5/Exericio8/Origem.cpp)
