@@ -46,6 +46,7 @@ int setupGeometry();
 int loadTexture(string path);
 void loadOBJ(string path);
 void loadMTL(string path);
+vector<glm::vec3> generateControlPointsSet(const std::string& input);
 
 
 // VARIAVEIS
@@ -60,6 +61,8 @@ float ns;
 string objPath = "../../3D_Models/Suzanne/SuzanneTriTextured.obj";
 string mtlFile = "";
 string texturePath = "";
+string animation = "-0.6 -0.4 0.0 -0.4 -0.6 0.0 -0.2 -0.2 0.0 0.0 0.0 0.0 0.2 0.2 0.0 0.4 0.6 0.0 0.6 0.4 0.0";
+
 Camera camera;
 
 
@@ -114,6 +117,15 @@ int main()
 	shader.setVec3("lightPos", -2.0f, 100.0f, 2.0f);
 	shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
+	std::vector<glm::vec3> controlPoints = generateControlPointsSet(animation);
+
+	Bezier bezier;
+	bezier.setControlPoints(controlPoints);
+	bezier.setShader(&shader);
+	bezier.generateCurve(100);
+	int nbCurvePoints = bezier.getNbCurvePoints();
+	int i = 0;
+
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -127,8 +139,12 @@ int main()
 
 		camera.update();
 
-		suzanne.draw();
+		glm::vec3 pointOnCurve = bezier.getPointOnCurve(i);
+		suzanne.updatePosition(pointOnCurve);
 		suzanne.update();
+		suzanne.draw();
+
+		i = (i + 1) % nbCurvePoints;
 
 		glfwSwapBuffers(window);
 	}
@@ -340,4 +356,16 @@ int loadTexture(string path)
 	stbi_image_free(data);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return texID;
+}
+
+std::vector<glm::vec3> generateControlPointsSet(const std::string& input) {
+	std::vector<glm::vec3> controlPoints;
+	std::istringstream iss(input);
+	float x, y, z;
+
+	while (iss >> x >> y >> z) {
+		controlPoints.push_back(glm::vec3(x, y, z));
+	}
+
+	return controlPoints;
 }

@@ -30,3 +30,7 @@ void Mesh::draw()
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+void Mesh::updatePosition(glm::vec3 position) {
+	this->position = position;
+}
