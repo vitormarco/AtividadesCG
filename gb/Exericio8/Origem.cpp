@@ -117,9 +117,7 @@ int main()
 	loadMTL(tresdModelsPaths + "/Background/" + mtlFile);
 	GLuint textureIDBackground = loadTexture(tresdModelsPaths + "/Background/" + texturePath);
 	GLuint VAOBackground = setupGeometry();
-	glUseProgram(shader.ID);
 	Mesh background;
-	glUseProgram(shader.ID);
 
 	background.initialize(VAOBackground, positions.size() / 3, &shader, textureIDBackground, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(50.0f));
 
@@ -129,8 +127,6 @@ int main()
 	GLuint textureIDSun = loadTexture(tresdModelsPaths + "/Sun/" + texturePath);
 	GLuint VAOSun = setupGeometry();
 
-	glUseProgram(shader.ID);
-
 	sun.initialize(VAOSun, positions.size() / 3, &shader, textureIDSun, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(sunScale));
 
 	// EARTH
@@ -138,9 +134,11 @@ int main()
 	loadMTL(tresdModelsPaths + "/Earth/" + mtlFile);
 	GLuint textureIDEarth = loadTexture(tresdModelsPaths + "/Earth/" + texturePath);
 	GLuint VAOEarth = setupGeometry();
-	glUseProgram(shader.ID);
+
 	Mesh earth;
 	earth.initialize(VAOEarth, positions.size() / 3, &shader, textureIDEarth, glm::vec3(6.0f, 0.0f, 1.0f), glm::vec3(0.4f, 0.4f, 0.4f),0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glUseProgram(shader.ID);
 
 	camera.initialize(&shader, width, height, 0.05f,0.05f,-90.0f,glm::vec3(0.0f,0.0f, -1.0f), glm::vec3(1.5f, 0.0f, 15.0f));
 
@@ -153,7 +151,6 @@ int main()
 	shader.setVec3("lightPos", -2.0f, 100.0f, 2.0f);
 	shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-	//std::vector<glm::vec3> controlPoints = generateControlPointsSet(animation);
 	std::vector<glm::vec3> controlPoints = createCircularCurve(radius, numPoints, earthSpeed);
 
 	Bezier bezier;
@@ -225,6 +222,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			rotateZ = false;
 			sunY = 0.0f;
 			sunX = 0.0f;
+			sun.resetScale(sunScale);
 		}
 	}
 	if (key == GLFW_KEY_X && action == GLFW_PRESS)

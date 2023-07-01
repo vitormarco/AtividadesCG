@@ -67,3 +67,13 @@ void Mesh::decrease(float decreaseNumber) {
 	model = glm::scale(model, scale);
 	shader->setMat4("model", glm::value_ptr(model));
 }
+
+void Mesh::resetScale(float scale) {
+	this->scale = glm::vec3(scale);
+
+	glm::mat4 model = glm::mat4(1);
+	model = glm::translate(model, position);
+	model = glm::rotate(model, glm::radians(angle), axis);
+	model = glm::scale(model, this->scale);
+	shader->setMat4("model", glm::value_ptr(model));
+}

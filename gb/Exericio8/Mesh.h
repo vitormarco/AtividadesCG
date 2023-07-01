@@ -20,6 +20,7 @@ public:
 	void rotate(int speed = 1, glm::vec3 axis = glm::vec3(0.0, 0.0, 0.0));
 	void increase(float increaseNumber = 0.1f);
 	void decrease(float decreaseNumber = 0.1f);
+	void resetScale(float scale = 1.0f);
 
 protected:
 	GLuint VAO; //Identificador do Vertex Array Object - Vértices e seus atributos
