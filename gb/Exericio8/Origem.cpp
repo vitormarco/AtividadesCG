@@ -62,6 +62,7 @@ string mtlFile = "";
 string texturePath = "";
 
 string tresdModelsPaths = "../../3D_Models";
+string backgroundPath = tresdModelsPaths + "/Background/bola.obj";
 string sunPath = tresdModelsPaths + "/Sun/bola.obj";
 string earth = tresdModelsPaths + "/Earth/bola.obj";
 Mesh sun;
@@ -110,6 +111,17 @@ int main()
 
 
 	Shader shader("../shaders/hello.vs", "../shaders/hello.fs");
+
+	// Background
+	loadOBJ(backgroundPath);
+	loadMTL(tresdModelsPaths + "/Background/" + mtlFile);
+	GLuint textureIDBackground = loadTexture(tresdModelsPaths + "/Background/" + texturePath);
+	GLuint VAOBackground = setupGeometry();
+	glUseProgram(shader.ID);
+	Mesh background;
+	glUseProgram(shader.ID);
+
+	background.initialize(VAOBackground, positions.size() / 3, &shader, textureIDBackground, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(50.0f));
 
 	// SUN
 	loadOBJ(sunPath);
@@ -163,7 +175,9 @@ int main()
 		glPointSize(20);
 
 		camera.update();
-
+		background.update();
+		background.draw();
+	
 		sun.updatePosition(glm::vec3(sunX, sunY, 0.0f));
 		sun.update();
 		if (rotateX) {
